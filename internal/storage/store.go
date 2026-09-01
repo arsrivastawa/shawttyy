@@ -15,8 +15,8 @@ var (
 // implementation for Postgres in a later milestone without touching callers.
 type Store interface {
 	Save(url *models.URL) error
-	Get(shortURL string) (*models.URL, error)
-	Delete(shortURL string) error
+	Get(shortCode string) (*models.URL, error)
+	Delete(shortCode string) error
 }
 
 type InMemoryStore struct {
@@ -32,28 +32,28 @@ func (s *InMemoryStore) Save(url *models.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.urls[url.ShortURL] = url
+	s.urls[url.ShortCode] = url
 	return nil
 }
 
-func (s *InMemoryStore) Get(shortURL string) (*models.URL, error) {
+func (s *InMemoryStore) Get(shortCode string) (*models.URL, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	url, ok := s.urls[shortURL]
+	url, ok := s.urls[shortCode]
 	if !ok {
 		return nil, ErrNotFound
 	}
 	return url, nil
 }
 
-func (s *InMemoryStore) Delete(shortURL string) error {
+func (s *InMemoryStore) Delete(shortCode string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.urls[shortURL]; !ok {
+	if _, ok := s.urls[shortCode]; !ok {
 		return ErrNotFound
 	}
-	delete(s.urls, shortURL)
+	delete(s.urls, shortCode)
 	return nil
 }
