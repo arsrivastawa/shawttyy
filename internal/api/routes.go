@@ -1,9 +1,9 @@
 package api
 
-import (
-	"net/http"
-)
+import "net/http"
 
-func RegisterHelloRouter(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/v1/hello", HelloHandler)
+func RegisterRoutes(mux *http.ServeMux, h *Handler) {
+	mux.HandleFunc("POST /shorten", h.Shorten)
+	mux.HandleFunc("DELETE /{short_code}", h.Delete)
+	mux.HandleFunc("GET /{short_code}", h.Redirect)
 }
