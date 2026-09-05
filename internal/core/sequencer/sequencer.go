@@ -4,6 +4,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/arsrivastawa/shawttyy/internal/error"
 )
 
 const (
@@ -25,16 +27,10 @@ type Sequencer struct {
 
 func New(nodeID int64) (*Sequencer, error) {
 	if nodeID < 0 || nodeID > maxNode {
-		return nil, ErrNodeOutOfRange
+		return nil, error.ErrNodeOutOfRange
 	}
 	return &Sequencer{nodeID: nodeID}, nil
 }
-
-type Error string
-
-func (e Error) Error() string { return string(e) }
-
-const ErrNodeOutOfRange Error = "sequencer: node id out of range"
 
 // Next returns the next snowflake-style 64-bit ID.
 func (s *Sequencer) Next() int64 {
