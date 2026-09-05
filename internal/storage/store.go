@@ -1,14 +1,10 @@
 package storage
 
 import (
-	"errors"
 	"sync"
 
+	"github.com/arsrivastawa/shawttyy/internal/exceptions"
 	"github.com/arsrivastawa/shawttyy/models"
-)
-
-var (
-	ErrNotFound = errors.New("URL not found")
 )
 
 // Store is the persistence contract for URL mappings. Swap the in-memory
@@ -42,7 +38,7 @@ func (s *InMemoryStore) Get(shortCode string) (*models.URL, error) {
 
 	url, ok := s.urls[shortCode]
 	if !ok {
-		return nil, ErrNotFound
+		return nil, exceptions.ErrNotFound
 	}
 	return url, nil
 }
@@ -52,7 +48,7 @@ func (s *InMemoryStore) Delete(shortCode string) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.urls[shortCode]; !ok {
-		return ErrNotFound
+		return exceptions.ErrNotFound
 	}
 	delete(s.urls, shortCode)
 	return nil

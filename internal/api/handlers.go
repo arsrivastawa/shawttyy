@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/arsrivastawa/shawttyy/internal/exceptions"
 	"github.com/arsrivastawa/shawttyy/internal/service"
-	"github.com/arsrivastawa/shawttyy/internal/storage"
 	"github.com/arsrivastawa/shawttyy/models"
 )
 
@@ -30,11 +30,11 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	url, err := h.svc.Shorten(&req)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidURL):
+		case errors.Is(err, exceptions.ErrInvalidOriginalURL):
 			h.writeError(w, http.StatusBadRequest, "original_url is required")
-		case errors.Is(err, service.ErrInvalidAlias):
+		case errors.Is(err, exceptions.ErrInvalidCustomAlias):
 			h.writeError(w, http.StatusBadRequest, "custom_alias must be alphanumeric and <= 11 chars")
-		case errors.Is(err, service.ErrAliasTaken):
+		case errors.Is(err, exceptions.ErrCustomAliasTaken):
 			h.writeError(w, http.StatusConflict, "custom_alias is already in use")
 		default:
 			h.writeError(w, http.StatusInternalServerError, "could not shorten url")
@@ -55,9 +55,9 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	url, err := h.svc.Resolve(shortCode)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrNotFound):
+		case errors.Is(err, exceptions.ErrNotFound):
 			h.writeError(w, http.StatusNotFound, "short url not found")
-		case errors.Is(err, service.ErrExpired):
+		case errors.Is(err, exceptions.ErrURLExpired):
 			h.writeError(w, http.StatusNotFound, "short url has expired")
 		default:
 			h.writeError(w, http.StatusInternalServerError, "could not resolve url")
@@ -73,7 +73,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	shortCode := r.PathValue("short_code")
 
 	if err := h.svc.Delete(shortCode); err != nil {
-		if errors.Is(err, storage.ErrNotFound) || errors.Is(err, service.ErrNotFound) {
+		if errors.Is(err, exceptions.ErrNotFound) || errors.Is(err, exceptions.ErrShortURLNotFound) {
 			h.writeError(w, http.StatusNotFound, "short url not found")
 			return
 		}

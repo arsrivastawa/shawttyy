@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/arsrivastawa/shawttyy/internal/error"
+	"github.com/arsrivastawa/shawttyy/internal/exceptions"
 )
 
 const (
@@ -27,7 +27,7 @@ type Sequencer struct {
 
 func New(nodeID int64) (*Sequencer, error) {
 	if nodeID < 0 || nodeID > maxNode {
-		return nil, error.ErrNodeOutOfRange
+		return nil, exceptions.ErrNodeOutOfRange
 	}
 	return &Sequencer{nodeID: nodeID}, nil
 }

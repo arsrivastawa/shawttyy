@@ -6,6 +6,7 @@ import (
 
 	"github.com/arsrivastawa/shawttyy/internal/core/encoder"
 	"github.com/arsrivastawa/shawttyy/internal/core/sequencer"
+	"github.com/arsrivastawa/shawttyy/internal/exceptions"
 	"github.com/arsrivastawa/shawttyy/internal/storage"
 	"github.com/arsrivastawa/shawttyy/models"
 )
@@ -13,14 +14,6 @@ import (
 const (
 	defaultExpiry = 5 * 365 * 24 * time.Hour
 	maxAliasLen   = 11
-)
-
-var (
-	ErrInvalidURL   = errors.New("service: original_url is required")
-	ErrInvalidAlias = errors.New("service: custom_alias must be alphanumeric and <= 11 chars")
-	ErrAliasTaken   = errors.New("service: custom_alias is already in use")
-	ErrNotFound     = errors.New("service: short_url not found")
-	ErrExpired      = errors.New("service: short_url has expired")
 )
 
 type URLService struct {
@@ -37,7 +30,7 @@ func New(store storage.Store, seq *sequencer.Sequencer) *URLService {
 // for collisions.
 func (s *URLService) Shorten(req *models.CreateURLRequest) (*models.URL, error) {
 	if req.OriginalURL == "" {
-		return nil, ErrInvalidURL
+		return nil, exceptions.ErrInvalidOriginalURL
 	}
 
 	longURL := req.OriginalURL
@@ -46,11 +39,11 @@ func (s *URLService) Shorten(req *models.CreateURLRequest) (*models.URL, error) 
 
 	if isCustom {
 		if !validAlias(shortCode) {
-			return nil, ErrInvalidAlias
+			return nil, exceptions.ErrInvalidCustomAlias
 		}
 		if _, err := s.store.Get(shortCode); err == nil {
-			return nil, ErrAliasTaken
-		} else if !errors.Is(err, storage.ErrNotFound) {
+			return nil, exceptions.ErrCustomAliasTaken
+		} else if !errors.Is(err, exceptions.ErrNotFound) {
 			return nil, err
 		}
 	} else {
@@ -81,14 +74,14 @@ func (s *URLService) Shorten(req *models.CreateURLRequest) (*models.URL, error) 
 func (s *URLService) Resolve(shortCode string) (*models.URL, error) {
 	url, err := s.store.Get(shortCode)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound) {
-			return nil, ErrNotFound
+		if errors.Is(err, exceptions.ErrNotFound) {
+			return nil, exceptions.ErrShortURLNotFound
 		}
 		return nil, err
 	}
 
 	if url.ExpiresAt != nil && time.Now().After(*url.ExpiresAt) {
-		return nil, ErrExpired
+		return nil, exceptions.ErrURLExpired
 	}
 
 	return url, nil
@@ -96,8 +89,8 @@ func (s *URLService) Resolve(shortCode string) (*models.URL, error) {
 
 func (s *URLService) Delete(shortCode string) error {
 	err := s.store.Delete(shortCode)
-	if errors.Is(err, storage.ErrNotFound) {
-		return ErrNotFound
+	if errors.Is(err, exceptions.ErrNotFound) {
+		return exceptions.ErrShortURLNotFound
 	}
 	return err
 }
