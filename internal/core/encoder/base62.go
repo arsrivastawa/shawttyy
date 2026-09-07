@@ -1,3 +1,4 @@
+// package main
 package encoder
 
 import "strings"
@@ -27,3 +28,9 @@ func reverse(s string) string {
 	}
 	return string(b)
 }
+
+// func main() {
+// 	str := Base62Encode(7250431849)
+// 	println(str) // Output: 7UG4XB
+// 	println(reverse(str))
+// }

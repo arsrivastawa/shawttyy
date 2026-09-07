@@ -31,11 +31,11 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, exceptions.ErrInvalidOriginalURL):
-			h.writeError(w, http.StatusBadRequest, "original_url is required")
+			h.writeError(w, http.StatusBadRequest, exceptions.ErrInvalidOriginalURL.Error())
 		case errors.Is(err, exceptions.ErrInvalidCustomAlias):
-			h.writeError(w, http.StatusBadRequest, "custom_alias must be alphanumeric and <= 11 chars")
+			h.writeError(w, http.StatusBadRequest, exceptions.ErrInvalidCustomAlias.Error())
 		case errors.Is(err, exceptions.ErrCustomAliasTaken):
-			h.writeError(w, http.StatusConflict, "custom_alias is already in use")
+			h.writeError(w, http.StatusConflict, exceptions.ErrCustomAliasTaken.Error())
 		default:
 			h.writeError(w, http.StatusInternalServerError, "could not shorten url")
 		}
@@ -56,11 +56,11 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, exceptions.ErrNotFound):
-			h.writeError(w, http.StatusNotFound, "short url not found")
+			h.writeError(w, http.StatusNotFound, exceptions.ErrShortURLNotFound.Error())
 		case errors.Is(err, exceptions.ErrURLExpired):
-			h.writeError(w, http.StatusNotFound, "short url has expired")
+			h.writeError(w, http.StatusNotFound, exceptions.ErrURLExpired.Error())
 		default:
-			h.writeError(w, http.StatusInternalServerError, "could not resolve url")
+			h.writeError(w, http.StatusInternalServerError, exceptions.ErrCanNotResolveURL.Error())
 		}
 		return
 	}
@@ -74,10 +74,10 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.svc.Delete(shortCode); err != nil {
 		if errors.Is(err, exceptions.ErrNotFound) || errors.Is(err, exceptions.ErrShortURLNotFound) {
-			h.writeError(w, http.StatusNotFound, "short url not found")
+			h.writeError(w, http.StatusNotFound, exceptions.ErrShortURLNotFound.Error())
 			return
 		}
-		h.writeError(w, http.StatusInternalServerError, "could not delete url")
+		h.writeError(w, http.StatusInternalServerError, exceptions.ErrCanNotResolveURL.Error())
 		return
 	}
 

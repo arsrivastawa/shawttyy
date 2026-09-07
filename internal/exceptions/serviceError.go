@@ -6,3 +6,4 @@ const ErrInvalidCustomAlias Error = "service: custom_alias must be alphanumeric 
 const ErrCustomAliasTaken Error = "service: custom_alias is already in use"
 const ErrShortURLNotFound Error = "service: short_url not found"
 const ErrURLExpired Error = "service: short_url has expired"
+const ErrCanNotResolveURL Error = "service: can not resolve url"
