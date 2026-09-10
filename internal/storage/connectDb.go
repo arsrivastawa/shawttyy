@@ -1,15 +1,16 @@
-package main
+package storage
 
 import (
 	"database/sql"
 	"log"
 
-	// The underscore registers the driver with database/sql behind the scenes
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func main() {
-	connStr := ""
+func ConnectDB(connStr string) *sql.DB {
+	if connStr == "" {
+		log.Fatal("Connection string is required but not set")
+	}
 
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
@@ -24,4 +25,5 @@ func main() {
 	}
 
 	println("Successfully connected to the DB")
+	return db
 }

@@ -5,8 +5,8 @@ services:
     container_name: shawttyy-db
     restart: always
     environment:
-      POSTGRES_USER: 
-      POSTGRES_PASSWORD: 
+      POSTGRES_USER: shawttyy_admin
+      POSTGRES_PASSWORD: shawttyy_ka_password
       POSTGRES_DB: shawttyy
     ports:
       - "5432:5432"
