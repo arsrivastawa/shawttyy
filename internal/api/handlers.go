@@ -38,6 +38,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 			h.writeError(w, http.StatusConflict, exceptions.ErrCustomAliasTaken.Error())
 		default:
 			h.writeError(w, http.StatusInternalServerError, "could not shorten url")
+			// println("Error shortening URL:", err.Error())
 		}
 		return
 	}

@@ -17,8 +17,6 @@ func ConnectDB(connStr string) *sql.DB {
 		log.Fatal("Error connecting to the Database: ", err)
 	}
 
-	defer db.Close()
-
 	err = db.Ping()
 	if err != nil {
 		log.Fatal("Error while pinging the database: ", err)
