@@ -49,9 +49,9 @@ func (s *PostgresStore) Get(shortCode string) (*models.URL, error) {
 	return &url, nil
 }
 
-func (s *PostgresStore) Delete(shortCode string) error {
-	query := `DELETE FROM urls WHERE short_code = $1`
-	result, err := s.db.Exec(query, shortCode)
+func (s *PostgresStore) Delete(shortCode string, userID string) error {
+	query := `DELETE FROM urls WHERE short_code = $1 AND user_id = $2`
+	result, err := s.db.Exec(query, shortCode, userID)
 	if err != nil {
 		return err
 	}
@@ -65,4 +65,25 @@ func (s *PostgresStore) Delete(shortCode string) error {
 	}
 
 	return nil
+}
+
+func (s *PostgresStore) GetByLongURLAndUserID(longURL, userID string) (*models.URL, error) {
+	query := `SELECT * FROM urls WHERE original_url = $1 AND user_id = $2`
+
+	row := s.db.QueryRow(query, longURL, userID)
+
+	var url models.URL
+	err := row.Scan(
+		&url.ID, &url.UserID, &url.ShortCode, &url.OriginalURL,
+		&url.IsCustom, &url.CreatedAt, &url.ExpiresAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, exceptions.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return &url, nil
 }

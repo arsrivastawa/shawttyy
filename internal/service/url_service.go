@@ -38,6 +38,14 @@ func (s *URLService) Shorten(req *models.CreateURLRequest) (*models.URL, error) 
 	userID := req.UserID
 	isCustom := shortCode != ""
 
+	{
+		url, err := s.store.GetByLongURLAndUserID(longURL, userID)
+
+		if err == nil {
+			return url, nil
+		}
+	}
+
 	// fmt.Print(" user idfrom service", userID)
 
 	if isCustom {
@@ -91,8 +99,23 @@ func (s *URLService) Resolve(shortCode string) (*models.URL, error) {
 	return url, nil
 }
 
-func (s *URLService) Delete(shortCode string) error {
-	err := s.store.Delete(shortCode)
+func (s *URLService) Delete(shortCode string, userID string) error {
+
+	{
+		url, err := s.store.Get(shortCode)
+		if err != nil {
+			if errors.Is(err, exceptions.ErrNotFound) {
+				return exceptions.ErrShortURLNotFound
+			}
+			return err
+		}
+
+		if url.UserID != userID {
+			return exceptions.ErrUnauthorized
+		}
+	}
+
+	err := s.store.Delete(shortCode, userID)
 	if errors.Is(err, exceptions.ErrNotFound) {
 		return exceptions.ErrShortURLNotFound
 	}

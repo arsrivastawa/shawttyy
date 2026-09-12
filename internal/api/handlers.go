@@ -87,7 +87,15 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	shortCode := r.PathValue("short_code")
 
-	if err := h.svc.Delete(shortCode); err != nil {
+	IP, err := ip.ExtractIPFromRequest(r.RemoteAddr)
+	if err != nil {
+		h.writeError(w, http.StatusInternalServerError, "could not extract IP address")
+		return
+	}
+
+	hash := ip.IPEncoder(IP)
+
+	if err := h.svc.Delete(shortCode, hash); err != nil {
 		if errors.Is(err, exceptions.ErrNotFound) || errors.Is(err, exceptions.ErrShortURLNotFound) {
 			h.writeError(w, http.StatusNotFound, exceptions.ErrShortURLNotFound.Error())
 			return
