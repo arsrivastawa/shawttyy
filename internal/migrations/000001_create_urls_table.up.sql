@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS urls (
     id BIGINT PRIMARY KEY,
+    user_id VARCHAR(22),
     short_code VARCHAR(11) UNIQUE NOT NULL,
     original_url TEXT NOT NULL,
     is_custom BOOLEAN DEFAULT FALSE,

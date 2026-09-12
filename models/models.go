@@ -6,6 +6,7 @@ import (
 
 type URL struct {
 	ID          int64      `json:"id"`
+	UserID      string     `json:"user_id"`
 	IsCustom    bool       `json:"is_custom"`
 	OriginalURL string     `json:"original_url"`
 	ShortCode   string     `json:"short_code"`
@@ -15,7 +16,7 @@ type URL struct {
 }
 
 type CreateURLRequest struct {
-	APIKey         string    `json:"api_key"`
+	UserID         string    `json:"user_id"`
 	OriginalURL    string    `json:"original_url"`
 	CustomAlias    string    `json:"custom_alias,omitempty"`
 	ExpirationTime time.Time `json:"expiration_time"`

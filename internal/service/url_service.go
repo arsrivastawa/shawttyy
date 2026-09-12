@@ -35,7 +35,10 @@ func (s *URLService) Shorten(req *models.CreateURLRequest) (*models.URL, error) 
 
 	longURL := req.OriginalURL
 	shortCode := req.CustomAlias
+	userID := req.UserID
 	isCustom := shortCode != ""
+
+	// fmt.Print(" user idfrom service", userID)
 
 	if isCustom {
 		if !validAlias(shortCode) {
@@ -58,6 +61,7 @@ func (s *URLService) Shorten(req *models.CreateURLRequest) (*models.URL, error) 
 
 	url := &models.URL{
 		ID:          s.seq.Next(),
+		UserID:      userID,
 		ShortCode:   shortCode,
 		OriginalURL: longURL,
 		IsCustom:    isCustom,

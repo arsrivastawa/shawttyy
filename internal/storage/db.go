@@ -18,16 +18,16 @@ func NewPostgresStore(db *sql.DB) *PostgresStore {
 
 func (s *PostgresStore) Save(url *models.URL) error {
 	query := `
-        INSERT INTO urls (id, short_code, original_url, is_custom, created_at, expires_at)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO urls (id, user_id, short_code, original_url, is_custom, created_at, expires_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
     `
-	_, err := s.db.Exec(query, url.ID, url.ShortCode, url.OriginalURL, url.IsCustom, url.CreatedAt, url.ExpiresAt)
+	_, err := s.db.Exec(query, url.ID, url.UserID, url.ShortCode, url.OriginalURL, url.IsCustom, url.CreatedAt, url.ExpiresAt)
 	return err
 }
 
 func (s *PostgresStore) Get(shortCode string) (*models.URL, error) {
 	query := `
-        SELECT id, short_code, original_url, is_custom, created_at, expires_at 
+        SELECT id, user_id, short_code, original_url, is_custom, created_at, expires_at 
         FROM urls 
         WHERE short_code = $1
     `
@@ -35,7 +35,7 @@ func (s *PostgresStore) Get(shortCode string) (*models.URL, error) {
 
 	var url models.URL
 	err := row.Scan(
-		&url.ID, &url.ShortCode, &url.OriginalURL,
+		&url.ID, &url.UserID, &url.ShortCode, &url.OriginalURL,
 		&url.IsCustom, &url.CreatedAt, &url.ExpiresAt,
 	)
 
