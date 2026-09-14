@@ -80,7 +80,7 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, url.OriginalURL, http.StatusFound)
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
 // Delete handles DELETE /{short_code}.

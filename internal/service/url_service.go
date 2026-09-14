@@ -2,8 +2,10 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/arsrivastawa/shawttyy/internal/cache"
 	"github.com/arsrivastawa/shawttyy/internal/core/encoder"
 	"github.com/arsrivastawa/shawttyy/internal/core/sequencer"
 	"github.com/arsrivastawa/shawttyy/internal/exceptions"
@@ -18,11 +20,12 @@ const (
 
 type URLService struct {
 	store storage.Store
+	cache cache.Cache
 	seq   *sequencer.Sequencer
 }
 
-func New(store storage.Store, seq *sequencer.Sequencer) *URLService {
-	return &URLService{store: store, seq: seq}
+func New(store storage.Store, cache cache.Cache, seq *sequencer.Sequencer) *URLService {
+	return &URLService{store: store, cache: cache, seq: seq}
 }
 
 // Shorten creates a URL entry and returns it. When customAlias is empty a new
@@ -77,26 +80,47 @@ func (s *URLService) Shorten(req *models.CreateURLRequest) (*models.URL, error) 
 		ExpiresAt:   &expiry,
 	}
 
+	s.cache.Set(shortCode, req.OriginalURL)
+
 	if err := s.store.Save(url); err != nil {
 		return nil, err
 	}
 	return url, nil
 }
 
-func (s *URLService) Resolve(shortCode string) (*models.URL, error) {
+func (s *URLService) Resolve(shortCode string) (string, error) {
+	start := time.Now()
+
+	val, err := s.cache.Get(shortCode)
+	if err == nil {
+		duration := time.Since(start)
+		fmt.Printf("[CACHE HIT] Resolved /%s in %v\n", shortCode, duration)
+
+		return val, nil
+	}
+
+	dbStart := time.Now()
+
 	url, err := s.store.Get(shortCode)
 	if err != nil {
 		if errors.Is(err, exceptions.ErrNotFound) {
-			return nil, exceptions.ErrShortURLNotFound
+			return "", exceptions.ErrShortURLNotFound
 		}
-		return nil, err
+		return "", err
 	}
 
 	if url.ExpiresAt != nil && time.Now().After(*url.ExpiresAt) {
-		return nil, exceptions.ErrURLExpired
+		return "", exceptions.ErrURLExpired
 	}
 
-	return url, nil
+	s.cache.Set(url.ShortCode, url.OriginalURL)
+
+	totalDuration := time.Since(start)
+	dbDuration := time.Since(dbStart)
+
+	fmt.Printf("[DB HIT] Resolved /%s in %v (DB Query took %v)\n", shortCode, totalDuration, dbDuration)
+
+	return url.OriginalURL, nil
 }
 
 func (s *URLService) Delete(shortCode string, userID string) error {
@@ -119,6 +143,7 @@ func (s *URLService) Delete(shortCode string, userID string) error {
 	if errors.Is(err, exceptions.ErrNotFound) {
 		return exceptions.ErrShortURLNotFound
 	}
+	s.cache.Del(shortCode)
 	return err
 }
 

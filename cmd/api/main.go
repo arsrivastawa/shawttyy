@@ -5,11 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
+	"time"
 
 	"github.com/arsrivastawa/shawttyy/internal/api"
+	"github.com/arsrivastawa/shawttyy/internal/cache"
 	"github.com/arsrivastawa/shawttyy/internal/core/sequencer"
 	"github.com/arsrivastawa/shawttyy/internal/service"
 	"github.com/arsrivastawa/shawttyy/internal/storage"
@@ -20,8 +19,8 @@ import (
 )
 
 const (
-	baseURL       = "http://localhost:8080"
-	defaultNodeID = 1
+	defaultNodeID      = 1
+	defaultCacheExpiry = 1 * time.Hour
 )
 
 func runDBMigrations(migrationURL string, dbSource string) {
@@ -43,22 +42,12 @@ func runDBMigrations(migrationURL string, dbSource string) {
 }
 
 func main() {
-
-	_, filename, _, _ := runtime.Caller(0)
-
-	baseDir := strings.Split(filepath.Dir(filename), "/")
-
-	newPath := strings.Join(baseDir[:len(baseDir)-2], "/")
-
-	fmt.Println(newPath)
-
-	targetPath := filepath.Join(newPath, "internal/migrations", "000001_create_urls_table.up.sql")
-
-	fmt.Println(targetPath)
-
 	fmt.Println("The Shawttyy is up and running!!!")
 	_ = godotenv.Load(".env")
 	connStr := os.Getenv("DATABASE_URL")
+	baseURL := os.Getenv("SERVER_URL")
+	redisURL := os.Getenv("REDIS_URL")
+
 	if connStr == "" {
 		fmt.Println("DATABASE_URL environment variable is required but not set")
 		os.Exit(1)
@@ -67,6 +56,7 @@ func main() {
 	runDBMigrations("file://internal/migrations", connStr)
 
 	db := storage.ConnectDB(connStr)
+	rdb, ctx := cache.ConnectRedis(redisURL)
 	defer db.Close()
 
 	seq, err := sequencer.New(defaultNodeID)
@@ -75,7 +65,8 @@ func main() {
 	}
 
 	store := storage.NewPostgresStore(db)
-	svc := service.New(store, seq)
+	cache := cache.NewRedisCache(rdb, ctx, defaultCacheExpiry)
+	svc := service.New(store, cache, seq)
 	handler := api.NewHandler(svc, baseURL)
 
 	mux := http.NewServeMux()
